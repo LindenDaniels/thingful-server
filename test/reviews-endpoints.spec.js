@@ -25,6 +25,10 @@ describe('Reviews Endpoints', function() {
   afterEach('cleanup', () => helpers.cleanTables(db))
 
   describe(`POST /api/reviews`, () => {
+    beforeEach(() =>
+       db.into('thingful_users').insert(testUsers)
+    )
+
     beforeEach('insert things', () =>
       helpers.seedThingsTables(
         db,
@@ -32,7 +36,35 @@ describe('Reviews Endpoints', function() {
         testThings,
       )
     )
+    beforeEach(() =>
+       db.into('thingful_users').insert(testUsers)
+    )
 
+    function makeAuthHeader(user) {
+         const token = Buffer.from(`${user.user_name}:${user.password}`).toString('base64')
+      return `Basic ${token}`
+       }
+       it(`responds 401 'Unauthorized request' when invalid password`, () => {
+        const userInvalidPass = { user_name: testUsers[0].user_name, password: 'wrong' }
+        return supertest(app)
+          .get(`/api/things/1`)
+          .set('Authorization', makeAuthHeader(userInvalidPass))
+          .expect(401, { error: `Unauthorized request` })
+      })
+       it(`responds 401 'Unauthorized request' when no credentials in token`, () => {
+               const userNoCreds = { user_name: '', password: '' }
+               return supertest(app)
+                 .get(`/api/things/123`)
+                 .set('Authorization', helpers.makeAuthHeader(userNoCreds))
+                 .expect(401, { error: `Unauthorized request` })
+             })
+             it(`responds 401 'Unauthorized request' when invalid user`, () => {
+                 const userInvalidCreds = { user_name: 'user-not', password: 'existy' }
+                  return supertest(app)
+                    .get(`/api/things/1`)
+                    .set('Authorization', makeAuthHeader(userInvalidCreds))
+                    .expect(401, { error: `Unauthorized request` })
+                })
     it(`creates an review, responding with 201 and the new review`, function() {
       this.retries(3)
       const testThing = testThings[0]
@@ -41,10 +73,10 @@ describe('Reviews Endpoints', function() {
         text: 'Test new review',
         rating: 3,
         thing_id: testThing.id,
-        user_id: testUser.id,
       }
       return supertest(app)
         .post('/api/reviews')
+        .set('Authorization', makeAuthHeader(testUsers[0]))
         .send(newReview)
         .expect(201)
         .expect(res => {
@@ -68,7 +100,7 @@ describe('Reviews Endpoints', function() {
               expect(row.text).to.eql(newReview.text)
               expect(row.rating).to.eql(newReview.rating)
               expect(row.thing_id).to.eql(newReview.thing_id)
-              expect(row.user_id).to.eql(newReview.user_id)
+              expect(row.user_id).to.eql(testUser.id)
               const expectedDate = new Date().toLocaleString()
               const actualDate = new Date(row.date_created).toLocaleString()
               expect(actualDate).to.eql(expectedDate)
@@ -76,7 +108,7 @@ describe('Reviews Endpoints', function() {
         )
     })
 
-    const requiredFields = ['text', 'rating', 'user_id', 'thing_id']
+    const requiredFields = ['text', 'rating', 'thing_id']
 
     requiredFields.forEach(field => {
       const testThing = testThings[0]
@@ -93,6 +125,7 @@ describe('Reviews Endpoints', function() {
 
         return supertest(app)
           .post('/api/reviews')
+          .set('Authorization', makeAuthHeader(testUsers[0]))
           .send(newReview)
           .expect(400, {
             error: `Missing '${field}' in request body`,
