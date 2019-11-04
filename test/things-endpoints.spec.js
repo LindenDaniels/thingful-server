@@ -16,7 +16,7 @@ describe('Things Endpoints', function() {
       return `Basic ${token}`
      }
      beforeEach(() =>
-     db.into('thingful_users').insert(testUsers)
+     helpers.seedUsers(db, testUsers)
   )
 
   before('make knex instance', () => {
@@ -34,9 +34,8 @@ describe('Things Endpoints', function() {
   afterEach('cleanup', () => helpers.cleanTables(db))
   describe(`Protected endpoints`, () => {
        beforeEach('insert things', () =>
+       helpers.seedUsers(db, testUsers),
          helpers.seedThingsTables(
-           db,
-           testUsers,
            testThings,
            testReviews,
         )
@@ -78,9 +77,8 @@ describe('Things Endpoints', function() {
 
     context('Given there are things in the database', () => {
       beforeEach('insert things', () =>
+      helpers.seedUsers(db, testUsers),
         helpers.seedThingsTables(
-          db,
-          testUsers,
           testThings,
           testReviews,
         )
@@ -155,9 +153,8 @@ describe('Things Endpoints', function() {
 
     context('Given there are things in the database', () => {
       beforeEach('insert things', () =>
+      helpers.seedUsers(db, testUsers),
         helpers.seedThingsTables(
-          db,
-          testUsers,
           testThings,
           testReviews,
         )
@@ -186,9 +183,8 @@ describe('Things Endpoints', function() {
       } = helpers.makeMaliciousThing(testUser)
 
       beforeEach('insert malicious thing', () => {
+        helpers.seedUsers(db, testUsers)
         return helpers.seedMaliciousThing(
-          db,
-          testUser,
           maliciousThing,
         )
       })
@@ -243,9 +239,8 @@ describe('Things Endpoints', function() {
 
     context('Given there are reviews for thing in the database', () => {
       beforeEach('insert things', () =>
+      helpers.seedUsers(db, testUsers),
         helpers.seedThingsTables(
-          db,
-          testUsers,
           testThings,
           testReviews,
         )

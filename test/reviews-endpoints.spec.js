@@ -30,9 +30,8 @@ describe('Reviews Endpoints', function() {
     )
 
     beforeEach('insert things', () =>
+    helpers.seedUsers(db, testUsers),
       helpers.seedThingsTables(
-        db,
-        testUsers,
         testThings,
       )
     )
