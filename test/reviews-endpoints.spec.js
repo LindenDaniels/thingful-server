@@ -31,39 +31,17 @@ describe('Reviews Endpoints', function() {
 
     beforeEach('insert things', () =>
     helpers.seedUsers(db, testUsers),
-      helpers.seedThingsTables(
-        testThings,
-      )
+    helpers.seedArticlesTables(
+      db,
+      testUsers,
+      testArticles,
     )
+  )
+
     beforeEach(() =>
        db.into('thingful_users').insert(testUsers)
     )
 
-    function makeAuthHeader(user) {
-         const token = Buffer.from(`${user.user_name}:${user.password}`).toString('base64')
-      return `Basic ${token}`
-       }
-       it(`responds 401 'Unauthorized request' when invalid password`, () => {
-        const userInvalidPass = { user_name: testUsers[0].user_name, password: 'wrong' }
-        return supertest(app)
-          .get(`/api/things/1`)
-          .set('Authorization', makeAuthHeader(userInvalidPass))
-          .expect(401, { error: `Unauthorized request` })
-      })
-       it(`responds 401 'Unauthorized request' when no credentials in token`, () => {
-               const userNoCreds = { user_name: '', password: '' }
-               return supertest(app)
-                 .get(`/api/things/123`)
-                 .set('Authorization', helpers.makeAuthHeader(userNoCreds))
-                 .expect(401, { error: `Unauthorized request` })
-             })
-             it(`responds 401 'Unauthorized request' when invalid user`, () => {
-                 const userInvalidCreds = { user_name: 'user-not', password: 'existy' }
-                  return supertest(app)
-                    .get(`/api/things/1`)
-                    .set('Authorization', makeAuthHeader(userInvalidCreds))
-                    .expect(401, { error: `Unauthorized request` })
-                })
     it(`creates an review, responding with 201 and the new review`, function() {
       this.retries(3)
       const testThing = testThings[0]
@@ -75,7 +53,7 @@ describe('Reviews Endpoints', function() {
       }
       return supertest(app)
         .post('/api/reviews')
-        .set('Authorization', makeAuthHeader(testUsers[0]))
+        .set('Authorization', helpers.makeAuthHeader(testUsers[0]))
         .send(newReview)
         .expect(201)
         .expect(res => {
@@ -124,7 +102,7 @@ describe('Reviews Endpoints', function() {
 
         return supertest(app)
           .post('/api/reviews')
-          .set('Authorization', makeAuthHeader(testUsers[0]))
+          .set('Authorization', helpers.makeAuthHeader(testUser))
           .send(newReview)
           .expect(400, {
             error: `Missing '${field}' in request body`,
